@@ -67,6 +67,20 @@ button:focus-visible{outline:2px solid var(--disc);outline-offset:2px}
 .credit{margin:22px 0 0;display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--mute);font:600 13px "Barlow Condensed",sans-serif;letter-spacing:.16em;text-transform:uppercase}
 #home .credit{margin-top:8px}
 .credit img{width:64px;height:64px;border-radius:12px;object-fit:cover;border:2px solid var(--line)}
+#uq{z-index:8;text-align:center}
+#uq h2{margin:6px 0 4px;font:700 40px/1 "Barlow Condensed",sans-serif;text-transform:uppercase}
+#uq .sub{margin:0 auto 18px;max-width:420px;color:var(--mute)}
+.uqw{max-width:420px;margin:0 auto;display:grid;gap:14px}
+#uqProgRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+#uqBarWrap{height:10px;border-radius:5px;background:#0d1b15;overflow:hidden}
+#uqBar{height:100%;width:0;background:var(--disc);transition:width .25s}
+#uqProg{font:700 22px "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+#uqKind{font:600 12px "Barlow Condensed",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+#uqText{font:700 48px/1.05 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#uqOpts{display:grid;gap:8px}
+#uqOpts.three{grid-template-columns:repeat(3,1fr)}
+#uqOpts.two{grid-template-columns:repeat(2,1fr)}
+#uqFb{min-height:24px;font-weight:600}
 #levelNote{max-width:560px;margin:0 auto 14px;font-size:14px}
 .actions{display:flex;gap:12px;justify-content:center;align-items:center;max-width:560px;margin:0 auto}
 .actions .big{flex:1}
@@ -126,7 +140,6 @@ tr.tot td{font-weight:600;border-bottom:0}
 .mini td:first-child,.mini td:nth-child(2){text-align:center}
 tr.me td{background:rgba(255,138,31,.18)}
 .card.locked{opacity:.6}
-.card.locked b::after{content:" (locked)";font-size:13px;color:var(--mute);letter-spacing:0}
 #pickNote{min-height:20px;color:var(--warn)}
 #hallBtn{margin-top:-4px}
 #settings{max-width:560px;margin:0 auto 16px;display:grid;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
@@ -182,7 +195,6 @@ tr.me td{background:rgba(255,138,31,.18)}
   <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
   <p class="sub" id="levelNote"></p>
   <div id="settings">
-    <div class="setrow"><span>Maths questions</span><div class="seg" id="segMaths"></div></div>
     <div id="mathOpts">
       <div class="setrow"><span>Topic</span><div class="seg" id="segTopic"></div></div>
       <div class="setrow"><span>Timer</span><div class="seg" id="segTimer"></div></div>
@@ -196,11 +208,24 @@ tr.me td{background:rgba(255,138,31,.18)}
   <h2>Pick your frisbee</h2>
   <p class="sub">Each one flies a little differently.</p>
   <div id="cards" role="radiogroup" aria-label="Choose your frisbee"></div>
+  <p class="sub" id="pickNote"></p>
   <div id="overview"></div>
   <p class="sub" id="pickCourse"></p>
-  <p class="sub" id="pickNote"></p>
   <div class="actions"><button class="ghost" id="pickBack" type="button">Back</button><button class="big" id="pickGo" type="button">Tee off</button></div>
   <p class="credit"><img src="data:image/jpeg;base64,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" alt="" width="64" height="64"><span>Created by Mr Andy</span></p>
+</section>
+
+<section id="uq" class="screen" hidden>
+  <h2 id="uqTitle">Unlock</h2>
+  <p class="sub" id="uqSub"></p>
+  <div class="uqw">
+    <div id="uqProgRow"><div id="uqBarWrap"><div id="uqBar"></div></div><b id="uqProg">0 / 10</b></div>
+    <div id="uqKind"></div>
+    <div id="uqText"></div>
+    <div id="uqOpts"></div>
+    <div id="uqFb" aria-live="polite"></div>
+    <button class="ghost" id="uqCancel" type="button">Cancel</button>
+  </div>
 </section>
 
 <div id="app">
@@ -285,12 +310,12 @@ tr.me td{background:rgba(255,138,31,.18)}
 
   /* ---------- Frisbees and discs ---------- */
   var FRISBEES=[
-    {name:'Blaze',tag:'Balanced all-rounder',c:'#ff8a1f',r:'#8a3d00',pow:1,wind:1},
-    {name:'Glacier',tag:'Flies far, drifts in wind',c:'#4fc3f7',r:'#0b5c7a',pow:1.08,wind:1.3},
-    {name:'Lime Zest',tag:'Cuts through the wind',c:'#9be15d',r:'#3b6e12',pow:.94,wind:.7},
-    {name:'Magenta Max',tag:'Huge power, wild drift',c:'#ff5fa2',r:'#8a1650',pow:1.12,wind:1.5},
-    {name:"Legend's Diamond",tag:'Earned with a hole in one',c:'#bff6ff',r:'#2aa5c4',pow:1.12,wind:.6,legend:true}
+    {id:'starter',name:'Starter',tag:'Short and drifty, but it flies',c:'#c9d1cc',r:'#5f6b65',pow:.86,wind:1.25,gate:{lv:'easy',n:10}},
+    {id:'blaze',name:'Blaze',tag:'Balanced all-rounder',c:'#ff8a1f',r:'#8a3d00',pow:1,wind:1,gate:{lv:'medium',n:15}},
+    {id:'comet',name:'Comet',tag:'Far and steady in the wind',c:'#4fc3f7',r:'#0b5c7a',pow:1.08,wind:.75,gate:{lv:'hard',n:15}},
+    {id:'legend',name:"Legend's Diamond",tag:'The best disc there is',c:'#bff6ff',r:'#2aa5c4',pow:1.12,wind:.6,legend:true,gate:{lv:'super',n:5}}
   ];
+  var picked=false,legendOK=false;
   var me=FRISBEES[0];
   var DISCS=[{name:'Driver',max:95},{name:'Midrange',max:55},{name:'Putter',max:22}];
 
@@ -430,7 +455,7 @@ tr.me td{background:rgba(255,138,31,.18)}
 
   /* ---------- State ---------- */
   var st={lie:{x:0,y:0},throws:0,phase:'aim',ang:0,disc:0,meterT:0,power:0,anim:null,
-          wind:{sp:3,a:1.2},cam:{x:3,y:20},msgT:0,spin:0,done:false,look:false,lookY:20,pen:1,q:null,qDone:false,qn:0,streak:0,retry:[],hA:0,hR:0,rA:0,rR:0};
+          wind:{sp:3,a:1.2},cam:{x:3,y:20},msgT:0,spin:0,done:false,look:false,lookY:20,pen:1,q:null,qDone:false,qn:0,qi:0,qOk:0,streak:0,retry:[],hA:0,hR:0,rA:0,rR:0};
   var scores=[];
   function windVec(){return{x:st.wind.sp*Math.sin(st.wind.a),y:st.wind.sp*Math.cos(st.wind.a)}}
   function toBasket(){
@@ -537,7 +562,7 @@ tr.me td{background:rgba(255,138,31,.18)}
   function holed(){
     st.done=true;st.phase='done';hud();scores[HI]=st.throws;
     var rec=recordHole(HI,st.throws);$('cardTop').innerHTML=rec.html;
-    if(st.throws===1){var firstAce=!legendUnlocked();save('ccfg-legend',{hole:HI+1,date:today()});$('cardUnlock').textContent=firstAce?"Legend's Diamond unlocked! Pick it next round.":'Another hole in one!'}
+    if(st.throws===1){var firstAce=!legendUnlocked();save('ccfg-legend',{hole:HI+1,date:today()});$('cardUnlock').textContent=firstAce?"Legend's Diamond unlocked! Answer 5 super hard questions to use it in a round.":'Another hole in one!'}
     else $('cardUnlock').textContent='';
     $('cardTitle').textContent=rateName(st.throws,PAR);
     $('cardSub').textContent='Holed out in '+st.throws+' throw'+(st.throws===1?'':'s')+' on a par '+PAR+'.'+(cfg.maths&&st.hA?' Maths: '+st.hR+'/'+st.hA+'.':'');
@@ -589,25 +614,29 @@ tr.me td{background:rgba(255,138,31,.18)}
     return '<svg viewBox="-40 -40 80 80" aria-hidden="true"><circle r="36" fill="'+f.c+'"/><circle r="36" fill="none" stroke="'+f.r+'" stroke-width="3"/><circle r="21" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="3"/><path d="M0 0 L21 0" stroke="rgba(255,255,255,.8)" stroke-width="3" stroke-linecap="round"/>'+star+'</svg>';
   }
   function pickNote(t){$('pickNote').textContent=t||''}
+  function fUnl(f){return f.legend?legendUnlocked():load('ccfg-frisbees',[]).indexOf(f.id)>=0}
+  function usable(f){return f.legend?(legendUnlocked()&&legendOK):fUnl(f)}
+  function gateText(f){var g=f.gate;return 'Answer '+g.n+' '+LEVELS[g.lv].n.toLowerCase()+' maths questions'}
   function buildCards(){
     var box=$('cards');box.innerHTML='';
+    if(picked&&!usable(me))picked=false;
     FRISBEES.forEach(function(f,i){
-      var locked=!!f.legend&&!legendUnlocked();
-      var b=document.createElement('button');b.type='button';b.className='card'+(locked?' locked':'');b.setAttribute('role','radio');b.dataset.i=i;
-      if(locked)b.setAttribute('aria-disabled','true');
-      b.innerHTML=discSvg(f)+'<b>'+f.name+'</b><em>'+(locked?'Sink a hole in one to unlock':f.tag)+'</em>'+
+      var ok=usable(f),aceLock=!!f.legend&&!legendUnlocked();
+      var b=document.createElement('button');b.type='button';b.className='card'+(ok?'':' locked');b.setAttribute('role','radio');b.dataset.i=i;
+      var line=ok?f.tag:aceLock?'Sink a hole in one to unlock':f.legend?'Unlocked! '+gateText(f)+' to use it this round':'Locked: '+gateText(f).toLowerCase()+' to unlock';
+      b.innerHTML=discSvg(f)+'<b>'+f.name+'</b><em>'+line+'</em>'+
         '<div class="bar">Distance<i><u style="width:'+Math.round((f.pow-.8)/.4*100)+'%"></u></i></div>'+
         '<div class="bar">Wind sway<i><u style="width:'+Math.round(f.wind/1.6*100)+'%"></u></i></div>';
       b.addEventListener('click',function(){
-        if(locked){pickNote("Sink a hole in one on any hole to unlock the Legend's Diamond.");return}
-        me=f;pickNote('');paintCards();
+        if(aceLock){pickNote("Sink a hole in one on any hole to unlock the Legend's Diamond.");return}
+        if(usable(f)){me=f;picked=true;pickNote('');paintCards();return}
+        startChallenge(f);
       });
       box.appendChild(b);
     });
-    if(me.legend&&!legendUnlocked())me=FRISBEES[0];
     paintCards();
   }
-  function paintCards(){[].forEach.call(document.querySelectorAll('.card'),function(b){b.setAttribute('aria-checked',String(FRISBEES[+b.dataset.i]===me))})}
+  function paintCards(){[].forEach.call(document.querySelectorAll('.card'),function(b){b.setAttribute('aria-checked',String(picked&&FRISBEES[+b.dataset.i]===me))})}
   var hallCourse='easy';
   function showFinal(hall){
     var all=load('ccfg-rounds',[]),tot=0,cur=null,c=hall?hallCourse:COURSE,tp=parOf(c),hs=COURSES[c].holes;
@@ -660,7 +689,7 @@ tr.me td{background:rgba(255,138,31,.18)}
     hideScreens();$('final').hidden=false;$('final').scrollTop=0;
   }
   /* ---------- Maths: question engine, quiz panel, saved progress ---------- */
-  var cfg=Object.assign({maths:true,level:'easy',topic:'mix',timed:false,open:false},load('ccfg-settings',{}));cfg.open=false;
+  var cfg=Object.assign({maths:true,level:'easy',topic:'mix',timed:false,open:false},load('ccfg-settings',{}));cfg.open=false;cfg.maths=true;
   var ORDER=['easy','medium','hard','super'];
   var LEVELS={
     easy:{n:'Easy',blurb:'Tables 2, 5, 10 and 11, number bonds to 20 and simple adding and subtracting.',tabs:[2,5,10,11],focus:[]},
@@ -761,8 +790,8 @@ tr.me td{background:rgba(255,138,31,.18)}
     var ans=Math.round(n/step)*step;
     return{lhs:'Round '+fmt(n)+' to the nearest '+fmt(step),ans:ans,fact:null,p:null,d:[ans+step,ans-step,Math.floor(n/step)*step,Math.ceil(n/step)*step,ans+step*10]};
   }
-  function pickKind(lv){
-    var t=cfg.topic;
+  function pickKind(lv,force){
+    var t=force?'mix':cfg.topic;
     if(t==='tables')return 'tables';
     if(t==='addsub')return lv==='easy'?wpick([['addsub',.5],['bonds',.5]]):'addsub';
     return wpick({
@@ -779,10 +808,10 @@ tr.me td{background:rgba(255,138,31,.18)}
       case 'bidmas':return bidmasQ();default:return roundQ(lv);
     }
   }
-  function makeQuestion(){
-    var lv=cfg.level,q,kind;st.qn++;
-    kind=pickKind(lv);
-    if(cfg.topic!=='addsub'&&st.retry.length&&st.qn-st.retry[0].at>=3)kind='tables';
+  function makeQuestion(lvArg,force){
+    var lv=lvArg||cfg.level,q,kind;st.qn++;
+    kind=pickKind(lv,force);
+    if(!force&&cfg.topic!=='addsub'&&st.retry.length&&st.qn-st.retry[0].at>=3)kind='tables';
     q=genQ(lv,kind);
     var seen={},dist=[],pool=q.d.concat([q.ans+1,q.ans-1,q.ans+2,q.ans+10,q.ans-10,q.ans+11,q.ans+3]);
     seen[q.ans]=1;
@@ -804,7 +833,7 @@ tr.me td{background:rgba(255,138,31,.18)}
   function startMeter(){st.phase='meter';st.meterT=performance.now();setThrowUi()}
   function openQuiz(){
     st.phase='quiz';st.qDone=false;var q=st.q=makeQuestion();
-    $('qKind').textContent=q.tf?'True or false?':'Answer to power your throw';
+    $('qKind').textContent='Question '+(st.qi+1)+' of 3'+(q.tf?': true or false?':'');
     $('qText').textContent=q.miss?q.q:q.tf?q.lhs+' = '+fmt(q.shown):q.lhs+' = ?';
     $('qText').style.fontSize=$('qText').textContent.length>22?'30px':'';
     $('qFb').textContent='';$('qTimer').hidden=!cfg.timed;$('qBar').style.width='100%';q.t0=performance.now();
@@ -822,14 +851,56 @@ tr.me td{background:rgba(255,138,31,.18)}
     [].forEach.call($('qOpts').children,function(b){
       b.disabled=true;if(b._v===truth)b.className='opt ok';else if(b._v===val)b.className='opt no';
     });
-    recordMath(q,ok);st.streak=ok?st.streak+1:0;
+    recordMath(q,ok);st.streak=ok?st.streak+1:0;if(ok)st.qOk++;st.qi++;
     var full=q.miss?q.q.replace('?',fmt(q.ans)):q.lhs+' = '+fmt(q.ans);
     $('qFb').textContent=ok?(val===null?'':'Correct!'+(st.streak>1?' '+st.streak+' in a row':'')):(val===null?'Time up. ':'Not quite. ')+full;
-    st.pen=ok?1:.7;
-    var wait=ok?650:2200,done=false;
-    function go(){if(done)return;done=true;$('quiz').hidden=true;paintDisc();st.phase='ready';setThrowUi();say(ok?'Correct! Tap to start the power bar':'Wrong answer, 70% distance. Tap to start the power bar')}
+    var last=st.qi>=3,wait=ok?650:2200,done=false;
+    function go(){
+      if(done)return;done=true;
+      if(!last){openQuiz();return}
+      st.pen=[.55,.7,.85,1][st.qOk];$('quiz').hidden=true;paintDisc();st.phase='ready';setThrowUi();
+      say(st.qOk===3?'3 out of 3! Full power. Tap to start the power bar':st.qOk+' out of 3 right, so '+Math.round(st.pen*100)+'% distance. Tap to start the power bar');
+    }
     $('quiz').onclick=go;setTimeout(go,wait);
   }
+  /* ---------- Frisbee unlock challenge: N correct answers at a set level ---------- */
+  var UQ=null;
+  function startChallenge(f){
+    UQ={f:f,got:0,q:null,done:false};
+    $('uqTitle').textContent=(f.legend?'Use ':'Unlock ')+f.name;
+    $('uqSub').textContent='Get '+f.gate.n+' '+LEVELS[f.gate.lv].n.toLowerCase()+' questions right'+(f.legend?' to use it for this round.':'.')+' Wrong answers do not count against you.';
+    $('uq').hidden=false;uqNext();
+  }
+  function uqNext(){
+    var cur=UQ,q=cur.q=makeQuestion(cur.f.gate.lv,true),n=cur.f.gate.n;cur.done=false;
+    $('uqProg').textContent=cur.got+' / '+n;$('uqBar').style.width=(cur.got/n*100)+'%';
+    $('uqKind').textContent=q.tf?'True or false?':'Answer';
+    $('uqText').textContent=q.miss?q.q:q.tf?q.lhs+' = '+fmt(q.shown):q.lhs+' = ?';
+    $('uqText').style.fontSize=$('uqText').textContent.length>22?'30px':'';
+    $('uqFb').textContent='';
+    var box=$('uqOpts');box.innerHTML='';box.className=q.tf?'two':'three';
+    (q.tf?[['True',true],['False',false]]:q.opts.map(function(v){return[fmt(v),v]})).forEach(function(o){
+      var b=document.createElement('button');b.type='button';b.className='opt';b.textContent=o[0];b._v=o[1];
+      b.addEventListener('click',function(){uqAnswer(cur,o[1])});box.appendChild(b);
+    });
+  }
+  function uqAnswer(cur,val){
+    if(UQ!==cur||cur.done)return;cur.done=true;
+    var q=cur.q,truth=q.tf?q.isTrue:q.ans,ok=val===truth,n=cur.f.gate.n;
+    [].forEach.call($('uqOpts').children,function(b){b.disabled=true;if(b._v===truth)b.className='opt ok';else if(b._v===val)b.className='opt no'});
+    recordMath(q,ok);if(ok)cur.got++;
+    $('uqProg').textContent=cur.got+' / '+n;$('uqBar').style.width=(cur.got/n*100)+'%';
+    $('uqFb').textContent=ok?'Correct!':'Not quite. '+(q.miss?q.q.replace('?',fmt(q.ans)):q.lhs+' = '+fmt(q.ans));
+    setTimeout(function(){
+      if(UQ!==cur)return;
+      if(cur.got>=n){
+        UQ=null;$('uq').hidden=true;
+        if(cur.f.legend)legendOK=true;else{var u=load('ccfg-frisbees',[]);if(u.indexOf(cur.f.id)<0){u.push(cur.f.id);save('ccfg-frisbees',u)}}
+        me=cur.f;picked=true;buildCards();pickNote(cur.f.name+(cur.f.legend?' is ready for this round!':' unlocked!'));
+      }else uqNext();
+    },ok?600:1900);
+  }
+  $('uqCancel').addEventListener('click',function(){UQ=null;$('uq').hidden=true});
   function buildSeg(id,items,cur,onSet){
     var box=$(id);box.innerHTML='';box.setAttribute('role','radiogroup');
     function paint(){[].forEach.call(box.children,function(c,k){c.setAttribute('aria-checked',String(items[k][1]===cur()))})}
@@ -840,10 +911,9 @@ tr.me td{background:rgba(255,138,31,.18)}
     });
     paint();
   }
-  function syncSettings(){$('mathOpts').hidden=!cfg.maths;if($('levels').children.length)paintLevels()}
-  function hintOff(){return cfg.maths?'Drag on the course to aim. Tap Throw, answer the question, tap to start the power bar, then tap again to release.':'Drag on the course to aim. Tap Throw to start the power bar, tap again to release.'}
+  function syncSettings(){if($('levels').children.length)paintLevels()}
+  function hintOff(){return cfg.maths?'Drag on the course to aim. Tap Throw, answer 3 questions, tap to start the power bar, then tap again to release.':'Drag on the course to aim. Tap Throw to start the power bar, tap again to release.'}
   function buildSettings(){
-    buildSeg('segMaths',[['On',true],['Off',false]],function(){return cfg.maths},function(v){cfg.maths=v});
     buildSeg('segTopic',[['Mixed','mix'],['Tables','tables'],['Add and subtract','addsub']],function(){return cfg.topic},function(v){cfg.topic=v});
     buildSeg('segTimer',[['Relaxed',false],['10 seconds',true]],function(){return cfg.timed},function(v){cfg.timed=v});
     syncSettings();
@@ -901,7 +971,7 @@ tr.me td{background:rgba(255,138,31,.18)}
   $('courseNext').addEventListener('click',function(){buildCards();buildOverview();pickNote('');$('pickCourse').textContent=CNAME[cfg.level]+' ('+LEVELS[cfg.level].n+')';show('pick')});
   $('pickBack').addEventListener('click',function(){show('course')});
   $('hallBtn').addEventListener('click',function(){hallCourse=COURSE;showFinal(true)});
-  $('pickGo').addEventListener('click',function(){if(isLocked(cfg.level))cfg.level='easy';setCourse(cfg.level);hideScreens();scores=[];st.rA=0;st.rR=0;st.streak=0;st.retry=[];st.qn=0;loadHole(0,true)});
+  $('pickGo').addEventListener('click',function(){if(!picked||!usable(me)){pickNote('Pick a frisbee first. Tap a locked one to unlock it with a maths challenge.');$('pick').scrollTop=0;return}legendOK=false;if(isLocked(cfg.level))cfg.level='easy';setCourse(cfg.level);hideScreens();scores=[];st.rA=0;st.rR=0;st.streak=0;st.retry=[];st.qn=0;loadHole(0,true)});
   $('nextBtn').addEventListener('click',function(){if(HI<HOLES.length-1)loadHole(HI+1,false);else{$('card').hidden=true;showFinal()}});
   $('againBtn').addEventListener('click',showHome);
 
@@ -920,10 +990,10 @@ tr.me td{background:rgba(255,138,31,.18)}
     $('hint').textContent=on?'Drag up and down to scroll the hole. Tap Back to aim when ready.':hintOff();
   }
   $('look').addEventListener('click',function(){if(st.phase==='aim')setLook(!st.look)});
-  function overlayOpen(){return !$('home').hidden||!$('course').hidden||!$('pick').hidden||!$('final').hidden}
+  function overlayOpen(){return !$('uq').hidden||!$('home').hidden||!$('course').hidden||!$('pick').hidden||!$('final').hidden}
   function press(){
     if(overlayOpen())return;
-    if(st.phase==='aim'){setLook(false);if(cfg.maths)openQuiz();else startMeter()}
+    if(st.phase==='aim'){setLook(false);if(cfg.maths){st.qi=0;st.qOk=0;openQuiz()}else startMeter()}
     else if(st.phase==='ready'){startMeter()}
     else if(st.phase==='meter'){st.power=meterVal();st.phase='flight';launch()}
   }
