@@ -486,7 +486,7 @@ tr.me td{background:rgba(255,138,31,.18)}
 
   /* ---------- State ---------- */
   var st={lie:{x:0,y:0},throws:0,phase:'aim',ang:0,disc:0,meterT:0,power:0,anim:null,
-          wind:{sp:3,a:1.2},cam:{x:3,y:20},msgT:0,spin:0,done:false,look:false,lookY:20,pen:1,q:null,qDone:false,qn:0,qi:0,qOk:0,streak:0,retry:[],hA:0,hR:0,rA:0,rR:0};
+          wind:{sp:3,a:1.2},cam:{x:3,y:20},msgT:0,spin:0,done:false,look:false,zt:1,lookY:20,pen:1,q:null,qDone:false,qn:0,qi:0,qOk:0,streak:0,retry:[],hA:0,hR:0,rA:0,rR:0};
   var scores=[];
   function windVec(){return{x:st.wind.sp*Math.sin(st.wind.a),y:st.wind.sp*Math.cos(st.wind.a)}}
   function toBasket(){
@@ -1121,8 +1121,10 @@ tr.me td{background:rgba(255,138,31,.18)}
     b.textContent=st.phase==='meter'?'Release':st.phase==='ready'?'Start power bar':st.phase==='flight'?'In the air':st.phase==='quiz'?'Answer first':'Throw';
     if(st.phase==='aim'){$('fill').style.width='0';$('mval').textContent='0 m'}
   }
+  function zFit(){return Math.min(1,H*.92/(S0*(BND.y1-BND.y0)),W*.96/(S0*(BND.x1-BND.x0)))}
+  function zLabel(){var on=st.zt<.98;st.look=on;$('look').textContent=on?'Zoom in':'Zoom out';$('look').setAttribute('aria-pressed',String(on))}
   function setLook(on){
-    st.look=on;if(on)st.lookY=st.cam.y;
+    st.look=on;st.zt=on?zFit():1;
     $('look').textContent=on?'Zoom in':'Zoom out';
     $('look').setAttribute('aria-pressed',String(on));
     if(st.phase==='aim'||st.phase==='ready')$('hint').textContent=on?'Zoomed out to show the whole hole. Drag to aim, then tap Zoom in or Throw.':(st.phase==='ready'?readyHint():hintOff());
@@ -1149,17 +1151,31 @@ tr.me td{background:rgba(255,138,31,.18)}
     if(e.code==='Space'||e.code==='Enter'){if(document.activeElement&&document.activeElement.tagName==='BUTTON')return;e.preventDefault();press()}
     else if(e.code==='ArrowLeft'){nudge(-.02)}else if(e.code==='ArrowRight'){nudge(.02)}
   });
-  var aiming=false,lastY=0;
+  var aiming=false,lastY=0,ptrs={},pinch=null,angBefore=0;
+  function pcount(){return Object.keys(ptrs).length}
+  function pdist(){var k=Object.keys(ptrs),a=ptrs[k[0]],b=ptrs[k[1]];return Math.max(10,Math.hypot(a.x-b.x,a.y-b.y))}
   function aimFrom(ev){
     if(st.phase!=='aim'&&st.phase!=='ready')return;
     var r=cv.getBoundingClientRect(),sx=ev.clientX-r.left,sy=ev.clientY-r.top;
     var wx=(sx-W/2)/S+st.cam.x,wy=(H/2-sy)/S+st.cam.y;
     st.ang=Math.atan2(wx-st.lie.x,wy-st.lie.y);hud();
   }
-  cv.addEventListener('pointerdown',function(e){aiming=true;lastY=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(x){}aimFrom(e)});
-  cv.addEventListener('pointermove',function(e){if(!aiming)return;aimFrom(e)});
-  cv.addEventListener('pointerup',function(){aiming=false});
-  cv.addEventListener('pointercancel',function(){aiming=false});
+  function zoomOk(){return st.phase==='aim'||st.phase==='ready'}
+  cv.addEventListener('pointerdown',function(e){
+    try{cv.setPointerCapture(e.pointerId)}catch(x){}
+    ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+    if(pcount()===1){angBefore=st.ang;aiming=true;lastY=e.clientY;aimFrom(e)}
+    else if(pcount()===2&&zoomOk()){aiming=false;st.ang=angBefore;hud();pinch={d:pdist(),z:st.zt}}
+  });
+  cv.addEventListener('pointermove',function(e){
+    if(ptrs[e.pointerId]){ptrs[e.pointerId]={x:e.clientX,y:e.clientY}}
+    if(pinch&&pcount()>=2){var f=zFit();st.zt=Math.max(f,Math.min(1.7,pinch.z*pdist()/pinch.d));zk=st.zt;zLabel();return}
+    if(aiming&&pcount()===1)aimFrom(e);
+  });
+  function pend(e){delete ptrs[e.pointerId];if(pcount()<2)pinch=null;if(pcount()===0)aiming=false}
+  cv.addEventListener('pointerup',pend);
+  cv.addEventListener('pointercancel',pend);
+  ['gesturestart','gesturechange','gestureend'].forEach(function(n){cv.addEventListener(n,function(e){e.preventDefault()})});
 
   /* ---------- Drawing ---------- */
   function fit(){
@@ -1357,9 +1373,9 @@ tr.me td{background:rgba(255,138,31,.18)}
     return{x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,h:a.h+(b.h-a.h)*u,t:t};
   }
   function frame(now){
-    var zt=(st.look&&(st.phase==='aim'||st.phase==='ready'||st.phase==='quiz'))?Math.min(1,H*.92/(S0*(BND.y1-BND.y0)),W*.96/(S0*(BND.x1-BND.x0))):1;
+    var zf=zFit(),zt=(st.phase==='aim'||st.phase==='ready'||st.phase==='quiz')?Math.max(zf,Math.min(1.7,st.zt)):1;
     zk+=(zt-zk)*.18;if(Math.abs(zt-zk)<.002)zk=zt;S=S0*zk;
-    var cam=st.cam,viewH=H/S,tx=3,ty,zoomed=st.look&&(st.phase==='aim'||st.phase==='ready'||st.phase==='quiz');
+    var cam=st.cam,viewH=H/S,tx=3,ty,zw=zk<1?(zf>=.99?1:Math.min(1,(1-zk)/(1-zf))):0;
     if(UH){
       var rf=(st.phase==='flight'&&st.anim)?animPoint(now):st.lie,ap=PATH[Math.min(PATH.length-1,nearI(rf.x,rf.y)+14)];
       ty=rf.y+Math.max(-1,Math.min(1,(ap.y-rf.y)/12))*viewH*.26;tx=BND.cx;
@@ -1368,10 +1384,10 @@ tr.me td{background:rgba(255,138,31,.18)}
     }else{
     if(st.phase==='flight'&&st.anim){var p=animPoint(now);ty=p.y+viewH*.18;tx=cx(ty)*.5+p.x*.5}
     else{ty=st.lie.y+viewH*.26;tx=cx(ty)}
-    if(!zoomed)ty=Math.max(viewH/2-14,Math.min(BASKET.y+8-viewH*.1,ty));
+    ty=Math.max(viewH/2-14,Math.min(BASKET.y+8-viewH*.1,ty));
     }
-    if(zoomed||zk<1){var my=(BND.y0+BND.y1)/2,mx=UH?BND.cx:(BND.x0+BND.x1)/2;if(zoomed){ty=my;tx=mx}}
-    cam.y+=(ty-cam.y)*(zoomed?.25:.12);cam.x+=(tx-cam.x)*(zoomed?.25:.12);
+    if(zw>0){var my=(BND.y0+BND.y1)/2,mx=UH?BND.cx:(BND.x0+BND.x1)/2;ty+=(my-ty)*zw;tx+=(mx-tx)*zw}
+    cam.y+=(ty-cam.y)*(zw>0?.25:.12);cam.x+=(tx-cam.x)*(zw>0?.25:.12);
     ctx.setTransform(dpr,0,0,dpr,0,0);
     drawCourse();drawBasket();
     var an=st.anim;
