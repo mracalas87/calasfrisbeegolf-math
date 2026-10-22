@@ -250,7 +250,7 @@ tr.me td{background:rgba(255,138,31,.18)}
       <div><div id="wspeed">3 m/s</div></div>
       <div id="wnote"></div>
     </div>
-    <button id="look" type="button" aria-pressed="false">Look ahead</button>
+    <button id="look" type="button" aria-pressed="false">Zoom out</button>
     <div id="quiz" hidden>
       <div id="qTimer" hidden><div id="qBar"></div></div>
       <div id="qKind"></div>
@@ -311,7 +311,7 @@ tr.me td{background:rgba(255,138,31,.18)}
 <script>
 (function(){
   var cv=document.getElementById('c'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
-  var W=300,H=400,S=7,dpr=1;
+  var W=300,H=400,S=7,S0=7,zk=1,dpr=1;
   var $=function(id){return document.getElementById(id)};
   function sm(t){return t*t*(3-2*t)}
   function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
@@ -966,7 +966,7 @@ tr.me td{background:rgba(255,138,31,.18)}
     st.hA++;st.rA++;if(ok){st.hR++;st.rR++}
     if(!ok&&q.p)st.retry.push({p:q.p,at:st.qn});
   }
-  function startMeter(){st.phase='meter';st.meterT=performance.now();setThrowUi()}
+  function startMeter(){setLook(false);st.phase='meter';st.meterT=performance.now();setThrowUi()}
   function openQuiz(){
     st.phase='quiz';st.qDone=false;var q=st.q=makeQuestion();
     $('qKind').textContent='Question '+(st.qi+1)+' of 3'+(q.tf?': true or false?':'');
@@ -994,7 +994,7 @@ tr.me td{background:rgba(255,138,31,.18)}
     function go(){
       if(done)return;done=true;
       if(!last){openQuiz();return}
-      st.pen=[.55,.7,.85,1][st.qOk];$('quiz').hidden=true;paintDisc();st.phase='ready';setThrowUi();
+      st.pen=[.55,.7,.85,1][st.qOk];$('quiz').hidden=true;paintDisc();st.phase='ready';setThrowUi();$('hint').textContent=st.look?'Zoomed out to show the whole hole. Drag to aim, then tap Zoom in or Start power bar.':readyHint();
       say(st.qOk===3?'3 out of 3! Full power. Tap to start the power bar':st.qOk+' out of 3 right, so '+Math.round(st.pen*100)+'% distance. Tap to start the power bar');
     }
     $('quiz').onclick=go;setTimeout(go,wait);
@@ -1048,6 +1048,7 @@ tr.me td{background:rgba(255,138,31,.18)}
     paint();
   }
   function syncSettings(){if($('levels').children.length)paintLevels()}
+  function readyHint(){return 'Still time to change your aim. Drag on the course, then tap Start power bar.'}
   function hintOff(){return cfg.maths?'Drag on the course to aim. Tap Throw, answer 3 questions, tap to start the power bar, then tap again to release.':'Drag on the course to aim. Tap Throw to start the power bar, tap again to release.'}
   function buildSettings(){
     buildSeg('segTopic',[['Mixed','mix'],['Tables','tables'],['Add and subtract','addsub']],function(){return cfg.topic},function(v){cfg.topic=v});
@@ -1116,27 +1117,27 @@ tr.me td{background:rgba(255,138,31,.18)}
   function setThrowUi(){
     var b=$('throw');
     b.disabled=(st.phase==='flight'||st.phase==='done'||st.phase==='quiz');
-    $('look').disabled=st.phase!=='aim';
+    $('look').disabled=!(st.phase==='aim'||st.phase==='ready');
     b.textContent=st.phase==='meter'?'Release':st.phase==='ready'?'Start power bar':st.phase==='flight'?'In the air':st.phase==='quiz'?'Answer first':'Throw';
     if(st.phase==='aim'){$('fill').style.width='0';$('mval').textContent='0 m'}
   }
   function setLook(on){
     st.look=on;if(on)st.lookY=st.cam.y;
-    $('look').textContent=on?'Back to aim':'Look ahead';
+    $('look').textContent=on?'Zoom in':'Zoom out';
     $('look').setAttribute('aria-pressed',String(on));
-    $('hint').textContent=on?'Drag up and down to scroll the hole. Tap Back to aim when ready.':hintOff();
+    if(st.phase==='aim'||st.phase==='ready')$('hint').textContent=on?'Zoomed out to show the whole hole. Drag to aim, then tap Zoom in or Throw.':(st.phase==='ready'?readyHint():hintOff());
   }
-  $('look').addEventListener('click',function(){if(st.phase==='aim')setLook(!st.look)});
+  $('look').addEventListener('click',function(){if(st.phase==='aim'||st.phase==='ready')setLook(!st.look)});
   function overlayOpen(){return !$('uq').hidden||!$('home').hidden||!$('course').hidden||!$('pick').hidden||!$('final').hidden}
   function press(){
     if(overlayOpen())return;
-    if(st.phase==='aim'){setLook(false);if(cfg.maths){st.qi=0;st.qOk=0;openQuiz()}else startMeter()}
+    if(st.phase==='aim'){if(cfg.maths){st.qi=0;st.qOk=0;openQuiz()}else startMeter()}
     else if(st.phase==='ready'){startMeter()}
     else if(st.phase==='meter'){st.power=meterVal();st.phase='flight';launch()}
   }
   function meterVal(){var m=((performance.now()-st.meterT)/1500)%2;return m<1?m:2-m}
   $('throw').addEventListener('click',press);
-  function nudge(d){if(st.phase==='aim'){st.ang+=d;hud()}}
+  function nudge(d){if(st.phase==='aim'||st.phase==='ready'){st.ang+=d;hud()}}
   $('left').addEventListener('click',function(){nudge(-.035)});
   $('right').addEventListener('click',function(){nudge(.035)});
   [].forEach.call(document.querySelectorAll('.chip'),function(b){
@@ -1150,20 +1151,20 @@ tr.me td{background:rgba(255,138,31,.18)}
   });
   var aiming=false,lastY=0;
   function aimFrom(ev){
-    if(st.phase!=='aim'||st.look)return;
+    if(st.phase!=='aim'&&st.phase!=='ready')return;
     var r=cv.getBoundingClientRect(),sx=ev.clientX-r.left,sy=ev.clientY-r.top;
     var wx=(sx-W/2)/S+st.cam.x,wy=(H/2-sy)/S+st.cam.y;
     st.ang=Math.atan2(wx-st.lie.x,wy-st.lie.y);hud();
   }
   cv.addEventListener('pointerdown',function(e){aiming=true;lastY=e.clientY;try{cv.setPointerCapture(e.pointerId)}catch(x){}aimFrom(e)});
-  cv.addEventListener('pointermove',function(e){if(!aiming)return;if(st.look&&st.phase==='aim'){st.lookY+=(e.clientY-lastY)/S;lastY=e.clientY}else aimFrom(e)});
+  cv.addEventListener('pointermove',function(e){if(!aiming)return;aimFrom(e)});
   cv.addEventListener('pointerup',function(){aiming=false});
   cv.addEventListener('pointercancel',function(){aiming=false});
 
   /* ---------- Drawing ---------- */
   function fit(){
     var r=stage.getBoundingClientRect();dpr=window.devicePixelRatio||1;
-    W=Math.max(200,r.width);H=Math.max(200,r.height);S=W/54;
+    W=Math.max(200,r.width);H=Math.max(200,r.height);S0=W/54;S=S0*zk;
     cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
   }
   if(window.ResizeObserver){new ResizeObserver(fit).observe(stage)}else{window.addEventListener('resize',fit)}
@@ -1356,20 +1357,21 @@ tr.me td{background:rgba(255,138,31,.18)}
     return{x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,h:a.h+(b.h-a.h)*u,t:t};
   }
   function frame(now){
-    var cam=st.cam,viewH=H/S,tx=3,ty;
+    var zt=(st.look&&(st.phase==='aim'||st.phase==='ready'||st.phase==='quiz'))?Math.min(1,H*.92/(S0*(BND.y1-BND.y0)),W*.96/(S0*(BND.x1-BND.x0))):1;
+    zk+=(zt-zk)*.18;if(Math.abs(zt-zk)<.002)zk=zt;S=S0*zk;
+    var cam=st.cam,viewH=H/S,tx=3,ty,zoomed=st.look&&(st.phase==='aim'||st.phase==='ready'||st.phase==='quiz');
     if(UH){
       var rf=(st.phase==='flight'&&st.anim)?animPoint(now):st.lie,ap=PATH[Math.min(PATH.length-1,nearI(rf.x,rf.y)+14)];
       ty=rf.y+Math.max(-1,Math.min(1,(ap.y-rf.y)/12))*viewH*.26;tx=BND.cx;
-      var looking=st.look&&st.phase==='aim';if(looking)ty=st.lookY;
+      var looking=false;
       var lo=BND.y0+viewH/2+2,hi=BND.y1-viewH/2-2;ty=lo>hi?(BND.y0+BND.y1)/2:Math.max(lo,Math.min(hi,ty));
-      if(looking)st.lookY=ty;
     }else{
     if(st.phase==='flight'&&st.anim){var p=animPoint(now);ty=p.y+viewH*.18;tx=cx(ty)*.5+p.x*.5}
     else{ty=st.lie.y+viewH*.26;tx=cx(ty)}
-    if(st.look&&st.phase==='aim'){st.lookY=Math.max(viewH/2-14,Math.min(BASKET.y+viewH*.25,st.lookY));ty=st.lookY;tx=cx(ty)}
-    else ty=Math.max(viewH/2-14,Math.min(BASKET.y+8-viewH*.1,ty));
+    if(!zoomed)ty=Math.max(viewH/2-14,Math.min(BASKET.y+8-viewH*.1,ty));
     }
-    cam.y+=(ty-cam.y)*(st.look?1:.12);cam.x+=(tx-cam.x)*.12;
+    if(zoomed||zk<1){var my=(BND.y0+BND.y1)/2,mx=UH?BND.cx:(BND.x0+BND.x1)/2;if(zoomed){ty=my;tx=mx}}
+    cam.y+=(ty-cam.y)*(zoomed?.25:.12);cam.x+=(tx-cam.x)*(zoomed?.25:.12);
     ctx.setTransform(dpr,0,0,dpr,0,0);
     drawCourse();drawBasket();
     var an=st.anim;
